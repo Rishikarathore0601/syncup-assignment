@@ -8,30 +8,113 @@ const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate } = require('../../middlewares/auth.middleware');
 
 /**
- * @route   POST /api/v1/auth/register
- * @desc    Register a new user
- * @access  Public
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: Authentication management
+ */
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - role
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [job_seeker, recruiter]
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Validation error
  */
 router.post('/register', registerValidation, validate, authController.register);
 
 /**
- * @route   POST /api/v1/auth/login
- * @desc    Login user and return tokens
- * @access  Public
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login user and return tokens
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
  */
 router.post('/login', loginValidation, validate, authController.login);
 
 /**
- * @route   POST /api/v1/auth/refresh-token
- * @desc    Refresh access token using refresh token
- * @access  Public
+ * @swagger
+ * /auth/refresh-token:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token refreshed
+ *       401:
+ *         description: Invalid refresh token
  */
 router.post('/refresh-token', authController.refreshToken);
 
 /**
- * @route   GET /api/v1/auth/me
- * @desc    Get current authenticated user
- * @access  Private
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current authenticated user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User details
+ *       401:
+ *         description: Unauthorized
  */
 router.get('/me', authenticate, authController.getMe);
 
