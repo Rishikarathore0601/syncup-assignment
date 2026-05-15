@@ -22,10 +22,7 @@ const env = {
   REDIS_DB: parseInt(process.env.REDIS_DB, 10) || 0,
   REDIS_TTL: parseInt(process.env.REDIS_TTL, 10) || 3600,
 
-  // Cloudinary
-  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
-  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
-  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
+
 
   // CORS
   CORS_ORIGIN: process.env.CORS_ORIGIN || '*',

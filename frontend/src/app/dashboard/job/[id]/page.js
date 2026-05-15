@@ -5,6 +5,9 @@ import { useAuth } from '../../../../context/AuthContext';
 import api from '../../../../lib/api';
 import Link from 'next/link';
 
+// No Cloudinary URL fix needed for Supabase resumes
+const fixResumeUrl = (url) => url;
+
 export default function JobApplications() {
   const { id } = useParams();
   const { user, loading: authLoading } = useAuth();
@@ -46,7 +49,7 @@ export default function JobApplications() {
     try {
       await api.patch(`/applications/${appId}/status`, { status: newStatus });
       // Update local state
-      setApplications(apps => apps.map(app => 
+      setApplications(apps => apps.map(app =>
         app._id === appId ? { ...app, status: newStatus } : app
       ));
     } catch (err) {
@@ -81,17 +84,37 @@ export default function JobApplications() {
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '12px' }}>
                     {app.applicant?.email} &bull; Applied: {new Date(app.createdAt).toLocaleDateString()}
                   </p>
-                  
+
                   {app.matchScore && (
                     <div style={{ display: 'inline-block', background: 'rgba(139, 92, 246, 0.1)', color: 'var(--secondary)', padding: '4px 12px', borderRadius: '16px', fontSize: '0.875rem', marginBottom: '16px' }}>
                       ✨ AI Match: {app.matchScore}%
                     </div>
                   )}
 
-                  <div style={{ marginBottom: '16px' }}>
-                    <a href={app.resumeUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.875rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                      📄 View Resume
-                    </a>
+                  <div style={{ marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {app.resumeUrl ? (
+                      <>
+                        <a
+                          href={fixResumeUrl(app.resumeUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.875rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                        >
+                          📄 View Resume
+                        </a>
+                        <a
+                          href={fixResumeUrl(app.resumeUrl)}
+                          download
+                          className="btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.875rem', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.1)', color: 'var(--accent)', borderColor: 'rgba(16,185,129,0.3)' }}
+                        >
+                          ⬇️ Download
+                        </a>
+                      </>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>No resume uploaded</span>
+                    )}
                   </div>
 
                   {app.coverLetter && (
@@ -104,11 +127,11 @@ export default function JobApplications() {
 
                 <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '16px', borderRadius: '8px', minWidth: '200px' }}>
                   <h4 style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--text-muted)' }}>Application Status</h4>
-                  <select 
+                  <select
                     value={app.status}
                     onChange={(e) => updateStatus(app._id, e.target.value)}
                     className="input-field"
-                    style={{ 
+                    style={{
                       borderColor: app.status === 'applied' ? 'var(--primary)' : app.status === 'shortlisted' ? 'var(--accent)' : app.status === 'rejected' ? 'var(--error)' : 'var(--card-border)',
                       color: app.status === 'applied' ? 'var(--primary)' : app.status === 'shortlisted' ? 'var(--accent)' : app.status === 'rejected' ? 'var(--error)' : 'white'
                     }}

@@ -1,51 +1,64 @@
 'use strict';
 
-const { cloudinary } = require('../../config/cloudinary');
+const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const { FILE_UPLOAD } = require('../../utils/constants');
 const logger = require('../../utils/logger');
 
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+let supabase;
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey);
+}
+
 /**
- * Upload a buffer to Cloudinary and return the public URL
+ * Upload a buffer to Supabase and return the public URL
  * @param {Buffer} fileBuffer - File data
  * @param {string} originalName - Original file name
+ * @param {string} mimetype - File mime type
  */
-const uploadFileToCloudinary = (fileBuffer, originalName) => {
-  return new Promise((resolve, reject) => {
-    const fileName = `${uuidv4()}-${originalName}`;
-    
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: FILE_UPLOAD.S3_RESUME_FOLDER, // Reusing the constant name but it's now a Cloudinary folder
-        public_id: fileName.split('.')[0],
-        resource_type: 'auto',
-      },
-      (error, result) => {
-        if (error) {
-          logger.error(`Cloudinary upload failed: ${error.message}`);
-          return reject(new Error('File upload failed. Please try again.'));
-        }
-        logger.info(`File uploaded to Cloudinary: ${result.public_id}`);
-        resolve({ url: result.secure_url, public_id: result.public_id });
-      }
-    );
+const uploadFileToSupabase = async (fileBuffer, originalName, mimetype) => {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized. Check credentials.');
+  }
 
-    // Use a small helper to convert buffer to stream
-    const bufferStream = require('stream').Readable.from(fileBuffer);
-    bufferStream.pipe(uploadStream);
-  });
+  const fileName = `${uuidv4()}-${originalName}`;
+  const bucketName = 'resumes';
+
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .upload(fileName, fileBuffer, {
+      contentType: mimetype,
+      upsert: false
+    });
+
+  if (error) {
+    logger.error(`Supabase upload failed: ${error.message}`);
+    throw new Error(`File upload failed. ${error.message}`);
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from(bucketName)
+    .getPublicUrl(fileName);
+
+  logger.info(`File uploaded to Supabase: ${fileName}`);
+  return { url: publicUrlData.publicUrl, public_id: fileName };
 };
 
 /**
- * Delete a file from Cloudinary by public ID
+ * Delete a file from Supabase by filename
  */
-const deleteFileFromCloudinary = async (publicId) => {
+const deleteFileFromSupabase = async (fileName) => {
+  if (!supabase) return;
   try {
-    const result = await cloudinary.uploader.destroy(publicId);
-    logger.info(`File deleted from Cloudinary: ${publicId}`);
-    return result;
+    const { error } = await supabase.storage.from('resumes').remove([fileName]);
+    if (error) throw error;
+    logger.info(`File deleted from Supabase: ${fileName}`);
+    return true;
   } catch (error) {
-    logger.error(`Cloudinary delete failed: ${error.message}`);
+    logger.error(`Supabase delete failed: ${error.message}`);
     throw error;
   }
 };
@@ -78,7 +91,7 @@ const validateFile = (file) => {
 };
 
 module.exports = {
-  uploadFileToCloudinary,
-  deleteFileFromCloudinary,
+  uploadFileToSupabase,
+  deleteFileFromSupabase,
   validateFile,
 };

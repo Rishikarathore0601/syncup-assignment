@@ -39,9 +39,10 @@ const uploadResumeController = async (req, res, next) => {
 
     uploadService.validateFile(req.file);
 
-    const { url, public_id } = await uploadService.uploadFileToCloudinary(
+    const { url, public_id } = await uploadService.uploadFileToSupabase(
       req.file.buffer,
-      req.file.originalname
+      req.file.originalname,
+      req.file.mimetype
     );
 
     // Optionally update user's resume URL in profile
