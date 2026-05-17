@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: syncup-frontend
+    runtime: node
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://syncup-assignment-2.onrender.com/
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        value: https://uedtvttusnvdcusjkiai.supabase.co
+      - key: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+        value: sb_publishable_vlvgAtKFv3q6a31XDkGDRQ_3I3CKQHS
