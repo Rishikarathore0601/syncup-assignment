@@ -3,9 +3,8 @@ services:
     name: syncup-frontend
     runtime: node
     plan: free
-    dir: frontend
-    buildCommand: npm install && npm run build
-    startCommand: next start
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && next start
     envVars:
       - key: NODE_ENV
         value: production
